@@ -41,7 +41,8 @@ close all; clear all; clc
 % 10: CShape all            (3D) -- x trajectories recorded at 100Hz
 % 11: Flat-C for loco-manip (2D) * 3 trajectories recorded at 100Hz (downsampled to 50Hz)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pkg_dir         = '/home/nbfigueroa/Dropbox/PhD_papers/CoRL-2018/code/ds-opt/';
+addpath(genpath(pwd));
+pkg_dir         = './';
 chosen_dataset  = 9; 
 sub_sample      = 5; % '>2' for real 3D Datasets, '1' for 2D toy datasets
 nb_trajectories = 3; % For real 3D data only
@@ -121,10 +122,25 @@ est_options.length_scale     = [];  % if estimate_l=0 you can define your own
                                     % directionality is taken into account
 
 % Fit GMM to Trajectory Data
-[Priors, Mu, Sigma] = fit_gmm(Xi_ref, Xi_dot_ref, est_options);
+user_input = input("\nType 0 for input, 1 for output: ");
+fprintf('\n\n')
+if user_input < 0 || user_input > 1
+    disp('Wrong number!')
+    disp('Please type a number between 0 and 1.')
+elseif user_input == 0
+    [Priors, Mu, Sigma] = fit_gmm(Xi_ref, Xi_dot_ref, est_options);
+elseif user_input == 1
+    [Priors, Mu, Sigma] = fit_gmm_output(Xi_ref, Xi_dot_ref, est_options);
+end
+
+% save("priors.mat", "Priors");
+% save("mu.mat", "Mu");
+% save("sigma.mat", "Sigma");
 
 %% Generate GMM data structure for DS learning
-clear ds_gmm; ds_gmm.Mu = Mu; ds_gmm.Sigma = Sigma; ds_gmm.Priors = Priors; 
+clear ds_gmm; 
+ds_gmm.Mu = Mu; ds_gmm.Sigma = Sigma; ds_gmm.Priors = Priors;
+% ds_gmm.Mu = load("mu.mat"); ds_gmm.Sigma = load("sigma.mat"); ds_gmm.Priors = load("priors.mat")
 
 %% (Recommended!) Step 2.1: Dilate the Covariance matrices that are too thin
 % This is recommended to get smoother streamlines/global dynamics
@@ -146,7 +162,7 @@ end
 
 % Visualize Estimated Parameters
 [h_gmm]  = visualizeEstimatedGMM(Xi_ref,  ds_gmm.Priors, ds_gmm.Mu, ds_gmm.Sigma, est_labels, est_options);
-
+return;
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% %%%%%%%%  Step 3 (DS ESTIMATION): ESTIMATE SYSTEM DYNAMICS MATRICES  %%%%%%%%%
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
